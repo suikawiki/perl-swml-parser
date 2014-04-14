@@ -1,3 +1,5 @@
 - "../../t_deps/modules/web-dom" tests build
+- "../../t_deps/modules/web-markup" tests build
+- "../../t_deps/modules/charclass" tests build
 - "../../t_deps/modules/testdataparser" tests
 - "../../t_deps/modules/test-x1" tests

@@ -1,7 +1,7 @@
-package Whatpm::SWML::Parser;
+package SWML::Parser;
 use strict;
 use warnings;
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 
 sub AA_NS () { q<http://pc5.2ch.net/test/read.cgi/hp/1096723178/aavocab#> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
@@ -62,11 +62,30 @@ sub new ($) {
   return $self;
 } # new
 
-sub parse_char_string ($$$;$) {
-  my $self = shift;
-  my @s = split /\x0D\x0A?|\x0A/, ref $_[0] ? ${$_[0]} : $_[0], -1;
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} ||= sub {
+    my %opt = @_;
+    my $r = 'Line ' . $opt{line} . ' column ' . $opt{column} . ': ';
 
+    if ($opt{token}) {
+      $r .= 'Token ' . (defined $opt{token}->{value}
+                        ? $opt{token}->{value} : $opt{token}->{type}) . ': ';
+    }
+
+    $r .= $opt{type} . ';' . $opt{level};
+    
+    warn $r . "\n";
+  };
+} # onerror
+
+sub parse_char_string ($$$) {
+  my $self = shift;
+  my @s = split /\x0D\x0A?|\x0A/, $_[0], -1;
   my $doc = $_[1];
+
   $doc->remove_child ($_) for @{$doc->child_nodes};
   my $html_el = $doc->create_element_ns (HTML_NS, [undef, 'html']);
   $doc->append_child ($html_el);
@@ -80,20 +99,6 @@ sub parse_char_string ($$$;$) {
     $_->set_user_data (manakai_source_line => 1);
     $_->set_user_data (manakai_source_column => 1);
   }
-  
-  my $_onerror = $_[2] || sub {
-    my %opt = @_;
-    my $r = 'Line ' . $opt{line} . ' column ' . $opt{column} . ': ';
-
-    if ($opt{token}) {
-      $r .= 'Token ' . (defined $opt{token}->{value}
-                        ? $opt{token}->{value} : $opt{token}->{type}) . ': ';
-    }
-
-    $r .= $opt{type} . ';' . $opt{level};
-    
-    warn $r . "\n";
-  }; # $_onerror
 
   my $line = 0;
   my $column = 0;
@@ -101,7 +106,7 @@ sub parse_char_string ($$$;$) {
   my @nt;
 
   my $onerror = sub {
-    $_onerror->(line => $line, column => $column, token => $token, @_);
+    $self->{onerror}->(line => $line, column => $column, token => $token, @_);
   }; # $onerror
 
   my $continuous_line;
@@ -1089,13 +1094,13 @@ sub parse_char_string ($$$;$) {
   } # A
 } # parse_char_string
 
+1;
+
 =head1 LICENSE
 
-Copyright 2008-2011 Wakaba <w@suika.fam.cx>.
+Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
-
-1;

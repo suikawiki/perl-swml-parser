@@ -1,56 +1,82 @@
 =head1 NAME
 
-Whatpm::SWML::Parser - SWML Parser
+SWML::Parser - An SWML text document parser
 
 =head1 SYNOPSIS
 
-  use Whatpm::SWML::Parser;
-  my $parser = Whatpm::SWML::Parser->new;
-  $parser->parse_char_string ($string => $doc, $onerror);
+  use SWML::Parser;
+  $parser = Whatpm::SWML::Parser->new;
+  $parser->onerror (sub { ... });
+  $parser->parse_char_string ($string => $doc);
 
 =head1 DESCRIPTION
 
-The C<Whatpm::SWML::Parser> module is an SWML parser.  SWML is a
-markup language used in SuikaWiki.  The parser converts a text
-representing an SWML document into a DOM tree.
+The C<SWML::Parser> module is an SWML text document parser.  SWML is a
+markup language used in SuikaWiki.  The parser converts a string of
+characters representing an SWML document into a DOM tree.
 
 =head1 METHODS
 
+Following methods are available:
+
 =over 4
 
-=item my $parser = Whatpm::SWML::Parser->new
+=item $parser = SWML::Parser->new
 
-Creates an instance of the SWML parser.
+Creates a new instance of the SWML parser.
 
-=item $parser->parse_char_string ($string, $doc, $onerror)
+=item $parser->onerror ($code)
+
+=item $code = $parser->onerror
+
+Get or set the error handler.  Note that this version of the SWML
+parser does not report any error at all.
+
+=item $parser->parse_char_string ($string, $doc)
 
 Parses a character string and constructs a DOM tree.
 
 The first argument, I<$string>, is a I<character> string to be parsed.
 
-The second argument, I<$doc> is a DOM C<Document> object (an instance
-of L<Message::DOM::Document> class) to which the parsed result is
-constructed.  Any existing child node is removed before parsing.
+The second argument, I<$doc> is a C<Document> object to which the
+parsed result is constructed.  Any existing child node is removed
+before parsing.
 
-The third argument, I<$onerror>, is a code reference which is invoked
-whenever a parse error is detected or a warning is emitted during the
-parsing process.  The code reference would receive a set of arguments
-which describe the kind and situation of the error or warnings.  It
-shares the same reporting format as the I<$onerror> code reference
-used in C<Whatpm::HTML> and other modules.
+The C<Document> object must be an instance of DOM C<Document>
+interface, implementing the manakai DOM Perl Binding specification.
+L<Web::DOM::Document> is an example of such DOM implementation.
+
+=back
+
+=head1 DEPENDENCY
+
+The module requires Perl 5.8 or later.
+
+=head1 SPECIFICATION
+
+=over 4
+
+=item SWML
+
+SuikaWiki Markup Language (SWML)
+<http://suika.suikawiki.org/www/markup/suikawiki/spec/swml-work>.
 
 =back
 
 =head1 SEE ALSO
 
-SuikaWiki Markup Language (SWML)
-<http://suika.fam.cx/www/markup/suikawiki/spec/swml-work>.
+The SuikaWiki project <http://suikawiki.org/>.
 
-L<Message::DOM::DOMImplementation>
+L<Web::DOM::Document> in the perl-web-dom package
+<https://github.com/manakai/perl-web-dom>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2008-2011 Wakaba <w@suika.fam.cx>.
+Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
