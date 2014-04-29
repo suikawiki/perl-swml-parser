@@ -5,7 +5,7 @@ CURL = curl
 GIT = git
 
 updatenightly: local/bin/pmbp.pl
-	$(CURL) https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
+	$(CURL) https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
 	$(GIT) add t_deps/tests t_deps/modules
 	perl local/bin/pmbp.pl --update
 	$(GIT) add config
