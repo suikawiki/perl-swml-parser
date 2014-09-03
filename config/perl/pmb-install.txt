@@ -9,7 +9,7 @@ Data::Dumper~2.151
 Exporter~5.70
 Encode~2.62
 Carp~1.3301
-Test::More~1.001003
+Test::More~1.001006
 Text::Diff~1.41
 Test::Differences~0.62
 Algorithm::Diff~1.1902
