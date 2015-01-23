@@ -7,7 +7,7 @@ Exporter::Lite~0.06
 File::Spec~3.47
 Data::Dumper~2.154
 Exporter~5.70
-Encode~2.67
+Encode~2.68
 Carp~1.3301
 Test::More~1.001014
 Text::Diff~1.41
