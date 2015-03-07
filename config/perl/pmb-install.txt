@@ -13,4 +13,4 @@ Test::More~1.001014
 Text::Diff~1.41
 Test::Differences~0.63
 Algorithm::Diff~1.1903
-Path::Tiny~0.061
+Path::Tiny~0.065
