@@ -1,7 +1,7 @@
 Scalar::Util~1.42
 parent~0.232
 Term::ANSIColor~4.03
-AnyEvent~7.08
+AnyEvent~7.09
 Capture::Tiny~0.28
 Exporter::Lite~0.06
 File::Spec~3.47
