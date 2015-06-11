@@ -413,6 +413,7 @@ sub parse_char_string ($$$) {
         my $cell_quoted;
         my $column_quoted = $column;
         my $column_cell = $column;
+        my $is_header = $s =~ s/^\*//;
         if ($s =~ s/^"//) {
           $s =~ s/^((?>[^"\\]|\\.)*)//;
           $cell_quoted = $1;
@@ -427,11 +428,12 @@ sub parse_char_string ($$$) {
           $cell =~ s/[\x09\x20]+\z//;
         }
         if (not defined $cell_quoted and defined $cell and
-            $cell eq '==') {
+            not $is_header and $cell eq '==') {
           push @nt, {type => TABLE_COLSPAN_CELL_TOKEN,
                      line => $line, column => $column_cell};
         } else {
           push @nt, {type => TABLE_CELL_START_TOKEN,
+                     is_header => $is_header,
                      line => $line,
                      column => defined $column_quoted ? $column_quoted: $column_cell};
           my $real_column = $column;
@@ -762,7 +764,8 @@ sub parse_char_string ($$$) {
       } elsif ($token->{type} == TABLE_CELL_END_TOKEN) {
         pop @$oe while not $structural_elements
             ->{$oe->[-1]->{node}->manakai_local_name};
-        pop @$oe if $oe->[-1]->{node}->manakai_local_name eq 'td';
+        pop @$oe if $oe->[-1]->{node}->manakai_local_name eq 'td' or
+                    $oe->[-1]->{node}->manakai_local_name eq 'th';
         
         $im = IN_TABLE_ROW_IM;
         $token = $get_next_token->();
@@ -1022,13 +1025,13 @@ sub parse_char_string ($$$) {
         redo A;
       } elsif ($token->{type} == END_OF_FILE_TOKEN) {
         return;
-      } elsif ({LABELED_LIST_MIDDLE_TOKEN => 1,
-                HEADING_END_TOKEN => 1,
-                PREFORMATTED_END_TOKEN => 1,
-                TABLE_ROW_END_TOKEN => 1,
-                TABLE_CELL_START_TOKEN => 1,
-                TABLE_CELL_END_TOKEN => 1,
-                TABLE_COLSPAN_CELL_TOKEN => 1}->{$token->{type}}) {
+      } elsif ({LABELED_LIST_MIDDLE_TOKEN, 1,
+                HEADING_END_TOKEN, 1,
+                PREFORMATTED_END_TOKEN, 1,
+                TABLE_ROW_END_TOKEN, 1,
+                TABLE_CELL_START_TOKEN, 1,
+                TABLE_CELL_END_TOKEN, 1,
+                TABLE_COLSPAN_CELL_TOKEN, 1}->{$token->{type}}) {
         ## NOTE: Ignore the token.
       } else {
         unless ({dd => 1,
@@ -1046,7 +1049,8 @@ sub parse_char_string ($$$) {
       }
     } elsif ($im == IN_TABLE_ROW_IM) {
       if ($token->{type} == TABLE_CELL_START_TOKEN) {
-        my $el = $doc->create_element_ns (HTML_NS, [undef, 'td']);
+        my $el = $doc->create_element_ns
+            (HTML_NS, [undef, $token->{is_header} ? 'th' : 'td']);
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
         $el->set_user_data (manakai_source_line => $token->{line});
@@ -1057,7 +1061,9 @@ sub parse_char_string ($$$) {
         redo A;
       } elsif ($token->{type} == TABLE_COLSPAN_CELL_TOKEN) {
         my $lc = $oe->[-1]->{node}->last_child;
-        if ($lc and $lc->manakai_local_name eq 'td') {
+        if ($lc and
+            ($lc->manakai_local_name eq 'td' or
+             $lc->manakai_local_name eq 'th')) {
           $lc->set_attribute_ns
               (undef, [undef, 'colspan'],
                ($lc->get_attribute_ns (undef, 'colspan') || 1) + 1);
