@@ -8,6 +8,7 @@ sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub SW09_NS () { q<urn:x-suika-fam-cx:markup:suikawiki:0:9:> }
 sub SW10_NS () { q<urn:x-suika-fam-cx:markup:suikawiki:0:10:> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
+sub MATH_NS () { q<http://www.w3.org/1998/Math/MathML> }
 
 sub IN_SECTION_IM () { 0 }
 sub IN_TABLE_ROW_IM () { 1 }
@@ -44,7 +45,7 @@ sub TABLE_COLSPAN_CELL_TOKEN () { 27 }
 my %block_elements = (
   insert => SW09_NS, delete => SW09_NS, refs => SW09_NS,
   figure => HTML_NS, figcaption => HTML_NS,
-  example => SW09_NS,
+  example => SW09_NS, history => SW09_NS,
 );
 
 my $tag_name_to_block_element_name = {
@@ -54,6 +55,7 @@ my $tag_name_to_block_element_name = {
   EG => 'example',
   FIG => 'figure',
   FIGCAPTION => 'figcaption',
+  HISTORY => 'history',
 };
 
 sub new ($) {
@@ -275,7 +277,7 @@ sub parse_char_string ($$$) {
           unshift @s, $s;
           $line--;
           last;
-        } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?)\][\x09\x20]*\z/) {
+        } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)\][\x09\x20]*\z/) {
           push @nt, {type => PREFORMATTED_END_TOKEN,
                      line => $line, column => $column};
           push @nt, {type => BLOCK_END_TAG_TOKEN, tag_name => $1,
@@ -359,7 +361,7 @@ sub parse_char_string ($$$) {
         $tokenize_text->(\$s);
       }
       return shift @nt;
-    } elsif ($s =~ /\A\[(INS|DEL|REFS|EG|FIG(?:CAPTION)?)(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/) {
+    } elsif ($s =~ /\A\[(INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/) {
       undef $continuous_line;
       return {type => BLOCK_START_TAG_TOKEN, tag_name => $1,
               classes => $2,
@@ -400,7 +402,7 @@ sub parse_char_string ($$$) {
       $tokenize_text->(\$s);
       $continuous_line = 1;
       return shift @nt;
-    } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?)\][\x09\x20]*\z/) {
+    } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)\][\x09\x20]*\z/) {
       $continuous_line = 1;
       return {type => BLOCK_END_TAG_TOKEN, tag_name => $1,
               line => $line, column => $column};
@@ -578,6 +580,7 @@ sub parse_char_string ($$$) {
                       TIME => [HTML_NS, 'time'],
                       VAR => [HTML_NS, 'var'],
                       WEAK => [SW09_NS, 'weak'],
+                      FRAC => [MATH_NS, 'mfrac'],
                      }->{$token->{tag_name}} || [SW10_NS, $token->{tag_name}];
           my $el = $doc->create_element_ns ($type->[0], [undef, $type->[1]]);
           $oe->[-1]->{node}->append_child ($el);
@@ -589,6 +592,14 @@ sub parse_char_string ($$$) {
               if defined $token->{classes};
           $el->set_attribute_ns (XML_NS, ['xml', 'lang'] => $token->{language})
               if defined $token->{language};
+
+          if ($type->[1] eq 'mfrac') {
+            my $el = $doc->create_element_ns ($type->[0], [undef, 'mi']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {%{$oe->[-1]}, node => $el};
+            $el->set_user_data (manakai_source_line => $token->{line});
+            $el->set_user_data (manakai_source_column => $token->{column});
+          }
           
           $token = $get_next_token->();
           redo A;
@@ -601,6 +612,7 @@ sub parse_char_string ($$$) {
           qn => [SW10_NS, 'nsuri'],
           ruby => [HTML_NS, 'rt'],
           rubyb => [HTML_NS, 'rt'],
+          mi => [MATH_NS, 'mi', 1],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
         pop @$oe if $pop;
 
@@ -617,7 +629,7 @@ sub parse_char_string ($$$) {
         redo A;
       } elsif ($token->{type} == INLINE_END_TAG_TOKEN) {
         pop @$oe if {
-          rt => 1, title => 1, nsuri => 1, attrvalue => 1,
+          rt => 1, title => 1, nsuri => 1, attrvalue => 1, mi => 1,
         }->{$oe->[-1]->{node}->manakai_local_name};
         
         if ({%$structural_elements,
@@ -1104,7 +1116,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2015 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
