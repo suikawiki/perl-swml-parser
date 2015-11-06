@@ -581,6 +581,7 @@ sub parse_char_string ($$$) {
                       VAR => [HTML_NS, 'var'],
                       WEAK => [SW09_NS, 'weak'],
                       FRAC => [MATH_NS, 'mfrac'],
+                      F => [SW09_NS, 'f'],
                      }->{$token->{tag_name}} || [SW10_NS, $token->{tag_name}];
           my $el = $doc->create_element_ns ($type->[0], [undef, $type->[1]]);
           $oe->[-1]->{node}->append_child ($el);
