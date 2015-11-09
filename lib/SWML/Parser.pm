@@ -533,8 +533,8 @@ sub parse_char_string ($$$) {
     %block_elements,
     body => 1, section => 1, blockquote => 1,
     h1 => 1, ul => 1, ol => 1, dl => 1, li => 1, dt => 1, dd => 1,
-    table => 1, tbody => 1, tr => 1, td => 1, p => 1, 'comment-p' => 1,
-    ed => 1, pre => 1,
+    table => 1, tbody => 1, tr => 1, td => 1, th => 1,
+    p => 1, 'comment-p' => 1, ed => 1, pre => 1,
   };
 
   my $im = IN_SECTION_IM;
