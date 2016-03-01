@@ -582,6 +582,13 @@ sub parse_char_string ($$$) {
                       WEAK => [SW09_NS, 'weak'],
                       FRAC => [MATH_NS, 'mfrac'],
                       F => [SW09_NS, 'f'],
+                      TZ => [SW09_NS, 'tz'],
+                      N => [SW09_NS, 'n'],
+                      LAT => [SW09_NS, 'lat'],
+                      LON => [SW09_NS, 'lon'],
+                      MUST => [SW09_NS, 'MUST'],
+                      SHOULD => [SW09_NS, 'SHOULD'],
+                      MAY => [SW09_NS, 'MAY'],
                      }->{$token->{tag_name}} || [SW10_NS, $token->{tag_name}];
           my $el = $doc->create_element_ns ($type->[0], [undef, $type->[1]]);
           $oe->[-1]->{node}->append_child ($el);
@@ -614,6 +621,11 @@ sub parse_char_string ($$$) {
           ruby => [HTML_NS, 'rt'],
           rubyb => [HTML_NS, 'rt'],
           mi => [MATH_NS, 'mi', 1],
+          time => [SW10_NS, 'attrvalue'],
+          tz => [SW10_NS, 'attrvalue'],
+          n => [SW10_NS, 'attrvalue'],
+          lat => [SW10_NS, 'attrvalue'],
+          lon => [SW10_NS, 'attrvalue'],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
         pop @$oe if $pop;
 
