@@ -42,6 +42,7 @@ sub TABLE_ROW_END_TOKEN () { 24 }
 sub TABLE_CELL_START_TOKEN () { 25 }
 sub TABLE_CELL_END_TOKEN () { 26 }
 sub TABLE_COLSPAN_CELL_TOKEN () { 27 }
+sub BLOCK_ELEMENT_TOKEN () { 28 }
 
 my %block_elements = (
   insert => SW09_NS, delete => SW09_NS, refs => SW09_NS,
@@ -306,6 +307,11 @@ sub parse_char_string ($$$) {
       push @nt, {type => HEADING_END_TOKEN,
                  line => $line, column => $column};
       undef $continuous_line;
+      return shift @nt;
+    } elsif ($s =~ /\A-\*-\*-(?>\(([^()\\]*)\))?[\x09\x20]*\z/) {
+      undef $continuous_line;
+      push @nt, {type => BLOCK_ELEMENT_TOKEN, classes => $1,
+                 line => $line, column => $column};
       return shift @nt;
     } elsif ($s =~ s/^([-=]+)[\x09\x20]*//) {
       push @nt, {type => LIST_START_TOKEN, depth => $1,
@@ -975,6 +981,17 @@ sub parse_char_string ($$$) {
       } elsif ($token->{type} == EMPTY_LINE_TOKEN) {
         pop @$oe while not {body => 1, section => 1, %block_elements}
             ->{$oe->[-1]->{node}->manakai_local_name};
+        $token = $get_next_token->();
+        redo A;
+      } elsif ($token->{type} == BLOCK_ELEMENT_TOKEN) {
+        pop @$oe while not {body => 1, section => 1, %block_elements}
+            ->{$oe->[-1]->{node}->manakai_local_name};
+
+        my $el = $doc->create_element_ns (HTML_NS, [undef, 'hr']);
+        $el->set_attribute_ns (undef, [undef, 'class'] => $token->{classes})
+            if defined $token->{classes};
+        $oe->[-1]->{node}->append_child ($el);
+
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == BLOCK_END_TAG_TOKEN) {
