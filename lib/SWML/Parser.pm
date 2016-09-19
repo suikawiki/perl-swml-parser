@@ -9,6 +9,7 @@ sub SW09_NS () { q<urn:x-suika-fam-cx:markup:suikawiki:0:9:> }
 sub SW10_NS () { q<urn:x-suika-fam-cx:markup:suikawiki:0:10:> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub MATH_NS () { q<http://www.w3.org/1998/Math/MathML> }
+sub HTML3_NS () { q<urn:x-suika-fam-cx:markup:ietf:html:3:draft:00:> }
 
 sub IN_SECTION_IM () { 0 }
 sub IN_TABLE_ROW_IM () { 1 }
@@ -46,6 +47,8 @@ my %block_elements = (
   insert => SW09_NS, delete => SW09_NS, refs => SW09_NS,
   figure => HTML_NS, figcaption => HTML_NS,
   example => SW09_NS, history => SW09_NS,
+  preamble => SW09_NS, postamble => SW09_NS,
+  note => HTML3_NS,
 );
 
 my $tag_name_to_block_element_name = {
@@ -56,7 +59,12 @@ my $tag_name_to_block_element_name = {
   FIG => 'figure',
   FIGCAPTION => 'figcaption',
   HISTORY => 'history',
+  NOTE => 'note',
+  PREAMBLE => 'preamble',
+  POSTAMBLE => 'postamble',
 };
+
+my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE/;
 
 sub new ($) {
   my $self = bless {
@@ -277,7 +285,7 @@ sub parse_char_string ($$$) {
           unshift @s, $s;
           $line--;
           last;
-        } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)\][\x09\x20]*\z/) {
+        } elsif ($s =~ /\A\]($BlockTagName)\][\x09\x20]*\z/o) {
           push @nt, {type => PREFORMATTED_END_TOKEN,
                      line => $line, column => $column};
           push @nt, {type => BLOCK_END_TAG_TOKEN, tag_name => $1,
@@ -361,7 +369,7 @@ sub parse_char_string ($$$) {
         $tokenize_text->(\$s);
       }
       return shift @nt;
-    } elsif ($s =~ /\A\[(INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/) {
+    } elsif ($s =~ /\A\[($BlockTagName)(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/o) {
       undef $continuous_line;
       return {type => BLOCK_START_TAG_TOKEN, tag_name => $1,
               classes => $2,
@@ -402,7 +410,7 @@ sub parse_char_string ($$$) {
       $tokenize_text->(\$s);
       $continuous_line = 1;
       return shift @nt;
-    } elsif ($s =~ /\A\](INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY)\][\x09\x20]*\z/) {
+    } elsif ($s =~ /\A\]($BlockTagName)\][\x09\x20]*\z/o) {
       $continuous_line = 1;
       return {type => BLOCK_END_TAG_TOKEN, tag_name => $1,
               line => $line, column => $column};

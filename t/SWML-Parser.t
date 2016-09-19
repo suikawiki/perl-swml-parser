@@ -12,6 +12,7 @@ use Web::HTML::Dumper qw/dumptree/;
 
 $Web::HTML::Dumper::NamespaceMapping->{q<urn:x-suika-fam-cx:markup:suikawiki:0:9:>} = 'sw';
 $Web::HTML::Dumper::NamespaceMapping->{q<urn:x-suika-fam-cx:markup:suikawiki:0:10:>} = 'sw10';
+$Web::HTML::Dumper::NamespaceMapping->{q<urn:x-suika-fam-cx:markup:ietf:html:3:draft:00:>} = 'h3';
 
 my $test_data_path = path (__FILE__)->parent->parent->child ('t_deps/tests/swml/parsing');
 
