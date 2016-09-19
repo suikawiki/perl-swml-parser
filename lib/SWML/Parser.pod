@@ -5,7 +5,7 @@ SWML::Parser - An SWML text document parser
 =head1 SYNOPSIS
 
   use SWML::Parser;
-  $parser = Whatpm::SWML::Parser->new;
+  $parser = SWML::Parser->new;
   $parser->onerror (sub { ... });
   $parser->parse_char_string ($string => $doc);
 
