@@ -14,10 +14,6 @@
 	path = t_deps/modules/test-x1
 	url = git://github.com/wakaba/perl-test-x1
 	track = master
-[submodule "t_deps/modules/charclass"]
-	path = t_deps/modules/charclass
-	url = git://github.com/wakaba/perl-charclass
-	track = master
 [submodule "t_deps/modules/web-markup"]
 	path = t_deps/modules/web-markup
 	url = git://github.com/manakai/perl-web-markup
