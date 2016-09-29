@@ -49,8 +49,16 @@ my %block_elements = (
   figure => HTML_NS, figcaption => HTML_NS,
   example => SW09_NS, history => SW09_NS,
   preamble => SW09_NS, postamble => SW09_NS,
-  note => HTML3_NS,
+  note => HTML3_NS, talk => SW09_NS, speaker => SW09_NS,
 );
+
+my $structural_elements = {
+  %block_elements,
+  body => 1, section => 1, blockquote => 1,
+  h1 => 1, ul => 1, ol => 1, dl => 1, li => 1, dt => 1, dd => 1,
+  table => 1, tbody => 1, tr => 1, td => 1, th => 1,
+  p => 1, 'comment-p' => 1, ed => 1, pre => 1,
+};
 
 my $tag_name_to_block_element_name = {
   INS => 'insert',
@@ -63,9 +71,15 @@ my $tag_name_to_block_element_name = {
   NOTE => 'note',
   PREAMBLE => 'preamble',
   POSTAMBLE => 'postamble',
+  TALK => 'talk',
+  SPEAKER => 'speaker',
 };
 
-my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE/;
+my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE|TALK|SPEAKER/;
+
+my $BlockTagNameToChildName = {
+  TALK => 'SPEAKER',
+};
 
 sub new ($) {
   my $self = bless {
@@ -381,10 +395,11 @@ sub parse_char_string ($$$) {
                  line => $line, column => $column};
       $column += $+[0] - $-[0];
       if (length $s) {
-        push @nt, {type => BLOCK_START_TAG_TOKEN, tag_name => 'FIGCAPTION',
+        my $name = $BlockTagNameToChildName->{$1} || 'FIGCAPTION';
+        push @nt, {type => BLOCK_START_TAG_TOKEN, tag_name => $name,
                    line => $line, column => $column};
         $tokenize_text->(\$s);
-        push @nt, {type => BLOCK_END_TAG_TOKEN, tag_name => 'FIGCAPTION',
+        push @nt, {type => BLOCK_END_TAG_TOKEN, tag_name => $name,
                    line => $line, column => $column};
       }
       undef $continuous_line;
@@ -552,13 +567,6 @@ sub parse_char_string ($$$) {
              section_depth => 0,
              quotation_depth => 0,
              list_depth => 0}];
-  my $structural_elements = {
-    %block_elements,
-    body => 1, section => 1, blockquote => 1,
-    h1 => 1, ul => 1, ol => 1, dl => 1, li => 1, dt => 1, dd => 1,
-    table => 1, tbody => 1, tr => 1, td => 1, th => 1,
-    p => 1, 'comment-p' => 1, ed => 1, pre => 1,
-  };
 
   my $im = IN_SECTION_IM;
   $token = $get_next_token->();
@@ -868,6 +876,18 @@ sub parse_char_string ($$$) {
         redo A;
       } elsif ($token->{type} == BLOCK_START_TAG_TOKEN and
                $tag_name_to_block_element_name->{$token->{tag_name}}) {
+        if ($token->{tag_name} eq 'TALK') {
+          if (not $oe->[-1]->{node}->local_name eq 'dialogue') {
+            my $el = $doc->create_element_ns (SW09_NS, [undef, 'dialogue']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {node => $el, section_depth => 0,
+                        quotation_depth => 0, list_depth => 0};
+          }
+        } else {
+          if ($oe->[-1]->{node}->local_name eq 'dialogue') {
+            pop @$oe;
+          }
+        }
         my $ln = $tag_name_to_block_element_name->{$token->{tag_name}};
         my $el = $doc->create_element_ns
             ($block_elements{$ln}, [undef, $ln]);
@@ -898,6 +918,7 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == LIST_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
         my $depth = length $token->{depth};
         my $list_type = substr ($token->{depth}, -1, 1) eq '-' ? 'ul' : 'ol';
         B: {
@@ -928,6 +949,7 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == LABELED_LIST_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
         pop @$oe if $oe->[-1]->{node}->manakai_local_name eq 'dd';
         if ($oe->[-1]->{node}->manakai_local_name ne 'dl') {
           my $el = $doc->create_element_ns (HTML_NS, [undef, 'dl']);
@@ -943,6 +965,8 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == TABLE_ROW_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
+
         my $el = $doc->create_element_ns (HTML_NS, [undef, 'table']);
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
@@ -961,6 +985,8 @@ sub parse_char_string ($$$) {
       } elsif (($token->{type} == BLOCK_START_TAG_TOKEN and
                 $token->{tag_name} eq 'PRE') or
                $token->{type} == PREFORMATTED_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
+
         my $el = $doc->create_element_ns (HTML_NS, [undef, 'pre']);
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
@@ -972,6 +998,8 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == COMMENT_PARAGRAPH_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
+
         my $el = $doc->create_element_ns (SW10_NS, [undef, 'comment-p']);
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
@@ -980,6 +1008,8 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == EDITORIAL_NOTE_START_TOKEN) {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
+
         my $el = $doc->create_element_ns (SW10_NS, [undef, 'ed']);
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
@@ -988,7 +1018,7 @@ sub parse_char_string ($$$) {
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == EMPTY_LINE_TOKEN) {
-        pop @$oe while not {body => 1, section => 1, %block_elements}
+        pop @$oe while not {body => 1, section => 1, dialogue => 1, %block_elements}
             ->{$oe->[-1]->{node}->manakai_local_name};
         $token = $get_next_token->();
         redo A;
@@ -1093,9 +1123,10 @@ sub parse_char_string ($$$) {
                 TABLE_COLSPAN_CELL_TOKEN, 1}->{$token->{type}}) {
         ## NOTE: Ignore the token.
       } else {
+        pop @$oe if $oe->[-1]->{node}->local_name eq 'dialogue';
         my $ln = $oe->[-1]->{node}->local_name;
-        if (($ln eq 'figcaption' and $oe->[-1]->{node}->has_child_nodes) or
-            not {dd => 1, li => 1, 'comment-p' => 1, ed => 1, figcaption => 1}->{$ln}) {
+        if (not {p => 1, dd => 1, li => 1, 'comment-p' => 1, ed => 1, figcaption => 1, speaker => 1}->{$ln} or
+            ({figcaption => 1, speaker => 1}->{$ln} and $oe->[-1]->{node}->has_child_nodes)) {
           my $el = $doc->create_element_ns (HTML_NS, [undef, 'p']);
           $oe->[-1]->{node}->append_child ($el);
           push @$oe, {%{$oe->[-1]}, node => $el};
