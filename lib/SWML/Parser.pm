@@ -375,11 +375,20 @@ sub parse_char_string ($$$) {
         $tokenize_text->(\$s);
       }
       return shift @nt;
-    } elsif ($s =~ /\A\[($BlockTagName)(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/o) {
+    } elsif ($s =~ s/\A\[($BlockTagName)(?>\(([^()\\]*)\))?\[[\x09\x20]*//o) {
+      push @nt, {type => BLOCK_START_TAG_TOKEN, tag_name => $1,
+                 classes => $2,
+                 line => $line, column => $column};
+      $column += $+[0] - $-[0];
+      if (length $s) {
+        push @nt, {type => BLOCK_START_TAG_TOKEN, tag_name => 'FIGCAPTION',
+                   line => $line, column => $column};
+        $tokenize_text->(\$s);
+        push @nt, {type => BLOCK_END_TAG_TOKEN, tag_name => 'FIGCAPTION',
+                   line => $line, column => $column};
+      }
       undef $continuous_line;
-      return {type => BLOCK_START_TAG_TOKEN, tag_name => $1,
-              classes => $2,
-              line => $line, column => $column};
+      return shift @nt;
     } elsif ($s =~ /\A\[PRE(?>\(([^()\\]*)\))?\[[\x09\x20]*\z/) {
       undef $continuous_line;
       push @nt, {type => BLOCK_START_TAG_TOKEN, tag_name => 'PRE',
@@ -1084,10 +1093,9 @@ sub parse_char_string ($$$) {
                 TABLE_COLSPAN_CELL_TOKEN, 1}->{$token->{type}}) {
         ## NOTE: Ignore the token.
       } else {
-        unless ({dd => 1,
-                li => 1,
-                 'comment-p' => 1,
-                 ed => 1}->{$oe->[-1]->{node}->manakai_local_name}) {
+        my $ln = $oe->[-1]->{node}->local_name;
+        if (($ln eq 'figcaption' and $oe->[-1]->{node}->has_child_nodes) or
+            not {dd => 1, li => 1, 'comment-p' => 1, ed => 1, figcaption => 1}->{$ln}) {
           my $el = $doc->create_element_ns (HTML_NS, [undef, 'p']);
           $oe->[-1]->{node}->append_child ($el);
           push @$oe, {%{$oe->[-1]}, node => $el};
@@ -1154,7 +1162,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2015 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2016 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
