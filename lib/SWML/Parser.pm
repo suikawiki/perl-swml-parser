@@ -50,6 +50,7 @@ my %block_elements = (
   example => SW09_NS, history => SW09_NS,
   preamble => SW09_NS, postamble => SW09_NS,
   note => HTML3_NS, talk => SW09_NS, speaker => SW09_NS,
+  box => SW09_NS,
 );
 
 my $structural_elements = {
@@ -73,13 +74,66 @@ my $tag_name_to_block_element_name = {
   POSTAMBLE => 'postamble',
   TALK => 'talk',
   SPEAKER => 'speaker',
+  BOX => 'box',
 };
 
-my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE|TALK|SPEAKER/;
+my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE|TALK|SPEAKER|BOX/;
 
 my $BlockTagNameToChildName = {
   TALK => 'SPEAKER',
 };
+
+my $InlineElements = {
+  AA => [AA_NS, 'aa'],
+                      ABBR => [HTML_NS, 'abbr'],
+                      CITE => [HTML_NS, 'cite'],
+                      CODE => [HTML_NS, 'code'],
+                      CSECTION => [SW10_NS, 'csection'],
+                      DEL => [HTML_NS, 'del'],
+                      DFN => [HTML_NS, 'dfn'],
+                      INS => [HTML_NS, 'ins'],
+                      KBD => [HTML_NS, 'kbd'],
+                      KEY => [SW10_NS, 'key'],
+                      Q => [HTML_NS, 'q'],
+                      QN => [SW10_NS, 'qn'],
+                      RUBY => [HTML_NS, 'ruby'],
+                      RUBYB => [SW09_NS, 'rubyb'],
+                      SAMP => [HTML_NS, 'samp'],
+                      SPAN => [HTML_NS, 'span'],
+                      SRC => [SW10_NS, 'src'],
+                      SUB => [HTML_NS, 'sub'],
+                      SUP => [HTML_NS, 'sup'],
+                      TIME => [HTML_NS, 'time'],
+                      VAR => [HTML_NS, 'var'],
+                      WEAK => [SW09_NS, 'weak'],
+                      FRAC => [MATH_NS, 'mfrac'],
+                      F => [SW09_NS, 'f'],
+                      TZ => [SW09_NS, 'tz'],
+                      N => [SW09_NS, 'n'],
+                      LAT => [SW09_NS, 'lat'],
+                      LON => [SW09_NS, 'lon'],
+                      MUST => [SW09_NS, 'MUST'],
+                      SHOULD => [SW09_NS, 'SHOULD'],
+  MAY => [SW09_NS, 'MAY'],
+  B => [HTML_NS, 'b'],
+  I => [HTML_NS, 'i'],
+  U => [HTML_NS, 'u'],
+  SMALLCAPS => [SW09_NS, 'smallcaps'],
+  ASIS => [SW09_NS, 'asis'],
+  EMPH => [SW09_NS, 'emph'],
+  SNIP => [SW09_NS, 'snip'],
+  DOTABOVE => [SW09_NS, 'dotabove'],
+  SQRT => [MATH_NS, 'msqrt'],
+  UNDEROVER => [MATH_NS, 'munderover'],
+  UNDER => [MATH_NS, 'munder'],
+  ROOT => [MATH_NS, 'mroot'],
+  VECTOR => [SW09_NS, 'vector'],
+  SUBSUP => [SW09_NS, 'subsup'],
+  LINES => [SW09_NS, 'lines'],
+  FENCED => [SW09_NS, 'fenced'],
+  YOKO => [SW09_NS, 'yoko'],
+  OKURI => [SW09_NS, 'okuri'],
+}; # $InlineElements
 
 sub new ($) {
   my $self = bless {
@@ -588,39 +642,7 @@ sub parse_char_string ($$$) {
           $token = $get_next_token->();
           redo A;
         } else {
-          my $type = {
-                      AA => [AA_NS, 'aa'],
-                      ABBR => [HTML_NS, 'abbr'],
-                      CITE => [HTML_NS, 'cite'],
-                      CODE => [HTML_NS, 'code'],
-                      CSECTION => [SW10_NS, 'csection'],
-                      DEL => [HTML_NS, 'del'],
-                      DFN => [HTML_NS, 'dfn'],
-                      INS => [HTML_NS, 'ins'],
-                      KBD => [HTML_NS, 'kbd'],
-                      KEY => [SW10_NS, 'key'],
-                      Q => [HTML_NS, 'q'],
-                      QN => [SW10_NS, 'qn'],
-                      RUBY => [HTML_NS, 'ruby'],
-                      RUBYB => [SW09_NS, 'rubyb'],
-                      SAMP => [HTML_NS, 'samp'],
-                      SPAN => [HTML_NS, 'span'],
-                      SRC => [SW10_NS, 'src'],
-                      SUB => [HTML_NS, 'sub'],
-                      SUP => [HTML_NS, 'sup'],
-                      TIME => [HTML_NS, 'time'],
-                      VAR => [HTML_NS, 'var'],
-                      WEAK => [SW09_NS, 'weak'],
-                      FRAC => [MATH_NS, 'mfrac'],
-                      F => [SW09_NS, 'f'],
-                      TZ => [SW09_NS, 'tz'],
-                      N => [SW09_NS, 'n'],
-                      LAT => [SW09_NS, 'lat'],
-                      LON => [SW09_NS, 'lon'],
-                      MUST => [SW09_NS, 'MUST'],
-                      SHOULD => [SW09_NS, 'SHOULD'],
-                      MAY => [SW09_NS, 'MAY'],
-                     }->{$token->{tag_name}} || [SW10_NS, $token->{tag_name}];
+          my $type = $InlineElements->{$token->{tag_name}} || [SW10_NS, $token->{tag_name}];
           my $el = $doc->create_element_ns ($type->[0], [undef, $type->[1]]);
           $oe->[-1]->{node}->append_child ($el);
           push @$oe, {%{$oe->[-1]}, node => $el};
@@ -632,17 +654,44 @@ sub parse_char_string ($$$) {
           $el->set_attribute_ns (XML_NS, ['xml', 'lang'] => $token->{language})
               if defined $token->{language};
 
-          if ($type->[1] eq 'mfrac') {
-            my $el = $doc->create_element_ns ($type->[0], [undef, 'mi']);
+          if ($type->[1] eq 'mfrac' or
+              $type->[1] eq 'msqrt' or
+              $type->[1] eq 'mroot' or
+              $type->[1] eq 'munderover' or
+              $type->[1] eq 'munder') {
+            my $el = $doc->create_element_ns ($type->[0], [undef, 'mtext']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {%{$oe->[-1]}, node => $el};
+            $el->set_user_data (manakai_source_line => $token->{line});
+            $el->set_user_data (manakai_source_column => $token->{column});
+          } elsif ($type->[1] eq 'lines') {
+            my $el = $doc->create_element_ns ($type->[0], [undef, 'line']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {%{$oe->[-1]}, node => $el};
+            $el->set_user_data (manakai_source_line => $token->{line});
+            $el->set_user_data (manakai_source_column => $token->{column});
+          } elsif ($type->[1] eq 'subsup') {
+            my $el = $doc->create_element_ns (SW09_NS, [undef, 'subscript']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {%{$oe->[-1]}, node => $el};
+            $el->set_user_data (manakai_source_line => $token->{line});
+            $el->set_user_data (manakai_source_column => $token->{column});
+          } elsif ($type->[1] eq 'fenced') {
+            my $el = $doc->create_element_ns ($type->[0], [undef, 'openfence']);
+            $oe->[-1]->{node}->append_child ($el);
+            push @$oe, {%{$oe->[-1]}, node => $el};
+            $el->set_user_data (manakai_source_line => $token->{line});
+            $el->set_user_data (manakai_source_column => $token->{column});
+          } elsif ($type->[1] eq 'okuri') {
+            my $el = $doc->create_element_ns (HTML_NS, [undef, 'rt']);
             $oe->[-1]->{node}->append_child ($el);
             push @$oe, {%{$oe->[-1]}, node => $el};
             $el->set_user_data (manakai_source_line => $token->{line});
             $el->set_user_data (manakai_source_column => $token->{column});
           }
-          
           $token = $get_next_token->();
           redo A;
-        } 
+        }
       } elsif ($token->{type} == INLINE_MIDDLE_TAG_TOKEN) {
         my ($ns, $ln, $pop) = @{{
           rt => [HTML_NS, 'rt', 1],
@@ -651,12 +700,18 @@ sub parse_char_string ($$$) {
           qn => [SW10_NS, 'nsuri'],
           ruby => [HTML_NS, 'rt'],
           rubyb => [HTML_NS, 'rt'],
-          mi => [MATH_NS, 'mi', 1],
+          mtext => [MATH_NS, 'mtext', 1],
           time => [SW10_NS, 'attrvalue'],
           tz => [SW10_NS, 'attrvalue'],
           n => [SW10_NS, 'attrvalue'],
           lat => [SW10_NS, 'attrvalue'],
           lon => [SW10_NS, 'attrvalue'],
+          line => [SW09_NS, 'line', 1],
+          openfence => [SW09_NS, 'fencedtext', 1],
+          fencedtext => [SW09_NS, 'closefence', 1],
+          closefence => [SW09_NS, 'attrvalue', 1],
+          subscript => [SW09_NS, 'superscript', 1],
+          superscript => [SW10_NS, 'attrvalue', 1],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
         pop @$oe if $pop;
 
@@ -673,7 +728,9 @@ sub parse_char_string ($$$) {
         redo A;
       } elsif ($token->{type} == INLINE_END_TAG_TOKEN) {
         pop @$oe if {
-          rt => 1, title => 1, nsuri => 1, attrvalue => 1, mi => 1,
+          rt => 1, title => 1, nsuri => 1, attrvalue => 1, mtext => 1,
+          line => 1, subscript => 1, superscript => 1,
+          fencedtext => 1, openfence => 1, closefence => 1,
         }->{$oe->[-1]->{node}->manakai_local_name};
         
         if ({%$structural_elements,
@@ -1193,7 +1250,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2017 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
