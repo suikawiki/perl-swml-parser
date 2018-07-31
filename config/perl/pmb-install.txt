@@ -3,7 +3,7 @@ AnyEvent~7.14
 Capture::Tiny~0.48
 Carp~1.38
 Exporter~5.72
-Path::Tiny~0.106
+Path::Tiny~0.108
 Scalar::Util~1.50
 Term::ANSIColor~4.06
 Test::Differences~0.64
