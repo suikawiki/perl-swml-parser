@@ -1,7 +1,7 @@
 Algorithm::Diff~1.1903
 AnyEvent~7.14
 Capture::Tiny~0.48
-Carp~1.38
+Carp~1.50
 Exporter~5.72
 Path::Tiny~0.108
 Scalar::Util~1.50
