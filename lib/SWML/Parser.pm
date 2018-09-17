@@ -133,6 +133,9 @@ my $InlineElements = {
   FENCED => [SW09_NS, 'fenced'],
   YOKO => [SW09_NS, 'yoko'],
   OKURI => [SW09_NS, 'okuri'],
+  SEE => [SW09_NS, 'sw-see'],
+  MACRON => [SW09_NS, 'sw-macron'],
+  CURSIVE => [SW09_NS, 'sw-cursive'],
 }; # $InlineElements
 
 sub new ($) {
@@ -709,7 +712,7 @@ sub parse_char_string ($$$) {
           line => [SW09_NS, 'line', 1],
           openfence => [SW09_NS, 'fencedtext', 1],
           fencedtext => [SW09_NS, 'closefence', 1],
-          closefence => [SW09_NS, 'attrvalue', 1],
+          closefence => [SW10_NS, 'attrvalue', 1],
           subscript => [SW09_NS, 'superscript', 1],
           superscript => [SW10_NS, 'attrvalue', 1],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
