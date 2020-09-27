@@ -1,4 +1,4 @@
-Algorithm::Diff~1.1903
+Algorithm::Diff~1.200
 AnyEvent~7.17
 Capture::Tiny~0.48
 Carp~1.50
