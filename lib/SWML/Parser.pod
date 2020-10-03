@@ -59,13 +59,13 @@ The module requires Perl 5.8 or later.
 =item SWML
 
 SuikaWiki Markup Language (SWML)
-<http://suika.suikawiki.org/www/markup/suikawiki/spec/swml-work>.
+<https://suikawiki.github.io/spec-swml/spec/>.
 
 =back
 
 =head1 SEE ALSO
 
-The SuikaWiki project <http://suikawiki.org/>.
+The SuikaWiki project <https://suikawiki.org/>.
 
 L<Web::DOM::Document> in the perl-web-dom package
 <https://github.com/manakai/perl-web-dom>.
@@ -76,7 +76,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2020 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -50,7 +50,6 @@ my %block_elements = (
   example => SW09_NS, history => SW09_NS,
   preamble => SW09_NS, postamble => SW09_NS,
   note => HTML3_NS, talk => SW09_NS, speaker => SW09_NS,
-  box => SW09_NS,
 );
 
 my $structural_elements = {
@@ -74,13 +73,31 @@ my $tag_name_to_block_element_name = {
   POSTAMBLE => 'postamble',
   TALK => 'talk',
   SPEAKER => 'speaker',
-  BOX => 'box',
 };
-
-my $BlockTagName = qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE|TALK|SPEAKER|BOX/;
 
 my $BlockTagNameToChildName = {
   TALK => 'SPEAKER',
+};
+
+my $BlockElements = {
+  BOX => [SW09_NS, 'box'],
+  VLR => [SW09_NS, 'sw-vlr'],
+  VRL => [SW09_NS, 'sw-vrl'],
+  LEFT => [SW09_NS, 'sw-left'],
+  RIGHT => [SW09_NS, 'sw-right'],
+  VLRBOX => [SW09_NS, 'sw-vlrbox'],
+  VRLBOX => [SW09_NS, 'sw-vrlbox'],
+  LEFTBOX => [SW09_NS, 'sw-leftbox'],
+  RIGHTBOX => [SW09_NS, 'sw-rightbox'],
+};
+for my $swname (keys %$BlockElements) {
+  $block_elements{$BlockElements->{$swname}->[1]} = $BlockElements->{$swname}->[0];
+  $tag_name_to_block_element_name->{$swname} = $BlockElements->{$swname}->[1];
+}
+
+my $BlockTagName = do {
+  my $names = join '|', keys %$BlockElements;
+  qr/INS|DEL|REFS|EG|FIG(?:CAPTION)?|HISTORY|NOTE|PREAMBLE|POSTAMBLE|TALK|SPEAKER|$names/;
 };
 
 my $InlineElements = {
@@ -136,6 +153,10 @@ my $InlineElements = {
   SEE => [SW09_NS, 'sw-see'],
   MACRON => [SW09_NS, 'sw-macron'],
   CURSIVE => [SW09_NS, 'sw-cursive'],
+  L => [SW09_NS, 'sw-l'],
+  R => [SW09_NS, 'sw-r'],
+  V => [SW09_NS, 'sw-v'],
+  TATE => [SW09_NS, 'sw-tate'],
 }; # $InlineElements
 
 sub new ($) {
@@ -1253,7 +1274,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2020 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
