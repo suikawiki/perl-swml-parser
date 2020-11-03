@@ -89,6 +89,8 @@ my $BlockElements = {
   VRLBOX => [SW09_NS, 'sw-vrlbox'],
   LEFTBOX => [SW09_NS, 'sw-leftbox'],
   RIGHTBOX => [SW09_NS, 'sw-rightbox'],
+  LEFTBTBOX => [SW09_NS, 'sw-leftbtbox'],
+  RIGHTBTBOX => [SW09_NS, 'sw-rightbtbox'],
 };
 for my $swname (keys %$BlockElements) {
   $block_elements{$BlockElements->{$swname}->[1]} = $BlockElements->{$swname}->[0];
@@ -156,7 +158,13 @@ my $InlineElements = {
   L => [SW09_NS, 'sw-l'],
   R => [SW09_NS, 'sw-r'],
   V => [SW09_NS, 'sw-v'],
+  VB => [SW09_NS, 'sw-vb'],
+  LT => [SW09_NS, 'sw-lt'],
+  RT => [SW09_NS, 'sw-rt'],
+  VT => [SW09_NS, 'sw-vt'],
+  VBT => [SW09_NS, 'sw-vbt'],
   TATE => [SW09_NS, 'sw-tate'],
+  MIRRORED => [SW09_NS, 'sw-mirrored'],
 }; # $InlineElements
 
 sub new ($) {
