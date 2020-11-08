@@ -335,10 +335,25 @@ sub parse_char_string ($$$) {
         $column += $+[0] - $-[0];
       } elsif ($$s =~ s/^__&&//) {
         if ($$s =~ s/^(.+?)&&__//) {
-          push @nt, {type => ELEMENT_TOKEN,
-                     local_name => 'replace', namespace => SW09_NS,
-                     by => $1,
-                     line => $line, column => $column};
+          my $replaced = {
+            '[' => '[',
+            ']' => ']',
+            '<' => '<',
+            '>' => '>',
+            '&' => '&',
+            '_' => '_',
+            "'" => "'",
+          }->{$1};
+          if (defined $replaced) {
+            push @nt, {type => CHARACTER_TOKEN,
+                       data => $replaced,
+                       line => $line, column => $column};
+          } else {
+            push @nt, {type => ELEMENT_TOKEN,
+                       local_name => 'replace', namespace => SW09_NS,
+                       by => $1,
+                       line => $line, column => $column};
+          }
           $column += 4 + $+[0] - $-[0];
         } else {
           push @nt, {type => CHARACTER_TOKEN,
