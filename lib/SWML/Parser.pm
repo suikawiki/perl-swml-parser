@@ -165,6 +165,7 @@ my $InlineElements = {
   VBT => [SW09_NS, 'sw-vbt'],
   TATE => [SW09_NS, 'sw-tate'],
   MIRRORED => [SW09_NS, 'sw-mirrored'],
+  BR => [SW09_NS, 'sw-br'],
 }; # $InlineElements
 
 sub new ($) {
