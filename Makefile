@@ -9,6 +9,7 @@ updatenightly: local/bin/pmbp.pl
 	$(GIT) add t_deps/tests t_deps/modules
 	perl local/bin/pmbp.pl --update
 	$(GIT) add config
+	$(CURL) -sSLf https://raw.githubusercontent.com/wakaba/ciconfig/master/ciconfig | RUN_GIT=1 REMOVE_UNUSED=1 perl
 
 ## ------ Setup ------
 
@@ -39,3 +40,5 @@ test-deps: deps
 
 test-main:
 	$(PROVE) t/*.t
+
+## License: Public Domain.
