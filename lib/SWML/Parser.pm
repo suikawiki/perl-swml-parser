@@ -344,6 +344,11 @@ sub parse_char_string ($$$) {
             '&' => '&',
             '_' => '_',
             "'" => "'",
+            '-' => '-',
+            '=' => '=',
+            '*' => '*',
+            ':' => ':',
+            '#' => '#',
           }->{$1};
           if (defined $replaced) {
             push @nt, {type => CHARACTER_TOKEN,
@@ -1298,7 +1303,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2020 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2022 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
