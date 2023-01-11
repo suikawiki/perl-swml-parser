@@ -794,7 +794,7 @@ sub parse_char_string ($$$) {
           closefence => [SW10_NS, 'attrvalue', 1],
           subscript => [SW09_NS, 'superscript', 1],
           superscript => [SW10_NS, 'attrvalue', 1],
-          data => [HTML_NS, 'sw-value'],
+          data => [SW09_NS, 'sw-value'],
           'sw-value' => [SW10_NS, 'attrvalue', 1],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
         pop @$oe if $pop;
