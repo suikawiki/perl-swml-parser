@@ -203,7 +203,7 @@ sub set_classes ($$) {
   my @class;
   my $id;
   my @itemprop;
-  for (grep { length } split /[\x09\x20]+/, $_[1]) {
+  for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $_[1]) {
     if (s/^#//) {
       $id //= $_;
     } elsif (s/^\.//) {
