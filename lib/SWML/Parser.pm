@@ -205,7 +205,7 @@ sub set_classes ($$) {
   my @itemprop;
   for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $_[1]) {
     if (s/^#//) {
-      $id //= $_;
+      $id = $_ if not defined $id;
     } elsif (s/^\.//) {
       push @itemprop, $_;
     } else {
