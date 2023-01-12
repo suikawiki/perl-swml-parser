@@ -77,6 +77,7 @@ my $tag_name_to_block_element_name = {
 
 my $BlockTagNameToChildName = {
   TALK => 'SPEAKER',
+  ITEMS => 'ITEMTYPES',
 };
 
 my $BlockElements = {
@@ -91,6 +92,8 @@ my $BlockElements = {
   RIGHTBOX => [SW09_NS, 'sw-rightbox'],
   LEFTBTBOX => [SW09_NS, 'sw-leftbtbox'],
   RIGHTBTBOX => [SW09_NS, 'sw-rightbtbox'],
+  ITEMS => [SW09_NS, 'sw-items'],
+  ITEMTYPES => [SW09_NS, 'sw-itemtypes'],
 };
 for my $swname (keys %$BlockElements) {
   $block_elements{$BlockElements->{$swname}->[1]} = $BlockElements->{$swname}->[0];
@@ -166,6 +169,7 @@ my $InlineElements = {
   TATE => [SW09_NS, 'sw-tate'],
   MIRRORED => [SW09_NS, 'sw-mirrored'],
   BR => [SW09_NS, 'sw-br'],
+  DATA => [HTML_NS, 'data'],
 }; # $InlineElements
 
 sub new ($) {
@@ -192,6 +196,32 @@ sub onerror ($;$) {
     warn $r . "\n";
   };
 } # onerror
+
+sub set_classes ($$) {
+  return unless defined $_[1];
+  my $el = $_[0];
+  my @class;
+  my $id;
+  my @itemprop;
+  for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $_[1]) {
+    if (s/^#//) {
+      $id = $_ if not defined $id;
+    } elsif (s/^\.//) {
+      push @itemprop, $_;
+    } else {
+      push @class, $_;
+    }
+  }
+  if (defined $id and length $id) {
+    $el->set_attribute_ns (undef, [undef, 'id'] => $id);
+  }
+  if (@itemprop) {
+    $el->set_attribute_ns (undef, [undef, 'itemprop'] => join ' ', @itemprop);
+  }
+  if (@class) {
+    $el->set_attribute_ns (undef, [undef, 'class'] => join ' ', @class);
+  }
+} # set_classes
 
 sub parse_char_string ($$$) {
   my $self = shift;
@@ -702,8 +732,7 @@ sub parse_char_string ($$$) {
           $el->set_user_data (manakai_source_line => $token->{line});
           $el->set_user_data (manakai_source_column => $token->{column});
 
-          $el->set_attribute_ns (undef, [undef, 'class'] => $token->{classes})
-              if defined $token->{classes};
+          set_classes ($el, $token->{classes});
           $el->set_attribute_ns (XML_NS, ['xml', 'lang'] => $token->{language})
               if defined $token->{language};
 
@@ -765,6 +794,8 @@ sub parse_char_string ($$$) {
           closefence => [SW10_NS, 'attrvalue', 1],
           subscript => [SW09_NS, 'superscript', 1],
           superscript => [SW10_NS, 'attrvalue', 1],
+          data => [SW09_NS, 'sw-value'],
+          'sw-value' => [SW10_NS, 'attrvalue', 1],
         }->{$oe->[-1]->{node}->manakai_local_name} || [SW10_NS, 'title']};
         pop @$oe if $pop;
 
@@ -784,6 +815,7 @@ sub parse_char_string ($$$) {
           rt => 1, title => 1, nsuri => 1, attrvalue => 1, mtext => 1,
           line => 1, subscript => 1, superscript => 1,
           fencedtext => 1, openfence => 1, closefence => 1,
+          'sw-value' => 1,
         }->{$oe->[-1]->{node}->manakai_local_name};
         
         if ({%$structural_elements,
@@ -1004,8 +1036,7 @@ sub parse_char_string ($$$) {
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {node => $el, section_depth => 0,
                     quotation_depth => 0, list_depth => 0};
-        $el->set_attribute_ns (undef, [undef, 'class'] => $token->{classes})
-            if defined $token->{classes};
+        set_classes ($el, $token->{classes});
         $token = $get_next_token->();
         redo A;
       } elsif ($token->{type} == QUOTATION_START_TOKEN) {
@@ -1101,8 +1132,7 @@ sub parse_char_string ($$$) {
         $oe->[-1]->{node}->append_child ($el);
         push @$oe, {%{$oe->[-1]}, node => $el};
 
-        $el->set_attribute_ns (undef, [undef, 'class'] => $token->{classes})
-            if defined $token->{classes};
+        set_classes ($el, $token->{classes});
 
         $im = IN_PARAGRAPH_IM;
         $token = $get_next_token->();
@@ -1137,8 +1167,7 @@ sub parse_char_string ($$$) {
             ->{$oe->[-1]->{node}->manakai_local_name};
 
         my $el = $doc->create_element_ns (HTML_NS, [undef, 'hr']);
-        $el->set_attribute_ns (undef, [undef, 'class'] => $token->{classes})
-            if defined $token->{classes};
+        set_classes ($el, $token->{classes});
         $oe->[-1]->{node}->append_child ($el);
 
         $token = $get_next_token->();
@@ -1303,7 +1332,7 @@ sub parse_char_string ($$$) {
 
 =head1 LICENSE
 
-Copyright 2008-2022 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2023 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
