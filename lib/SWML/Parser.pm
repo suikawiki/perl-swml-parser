@@ -170,6 +170,9 @@ my $InlineElements = {
   MIRRORED => [SW09_NS, 'sw-mirrored'],
   BR => [SW09_NS, 'sw-br'],
   DATA => [HTML_NS, 'data'],
+  CH => [SW09_NS, 'sw-ch'],
+  CC => [SW09_NS, 'sw-cc'],
+  CN => [SW09_NS, 'sw-cn'],
 }; # $InlineElements
 
 sub new ($) {
